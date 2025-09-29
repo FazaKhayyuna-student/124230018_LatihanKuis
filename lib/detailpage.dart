@@ -10,8 +10,28 @@ class DetailPage extends StatefulWidget {
 }
 
 class _DetailPageState extends State<DetailPage> {
-  final TextEditingController _jumlahController = TextEditingController();
+  final TextEditingController _jumlahController = TextEditingController(text: '1');
   int totalHarga = 0;
+  
+  @override
+  void initState() {
+    super.initState();
+    _hitungTotal();
+    _jumlahController.addListener(_hitungTotal);
+  }
+
+  @override
+  void dispose() {
+    _jumlahController.removeListener(_hitungTotal);
+    _jumlahController.dispose();
+    super.dispose();
+  }
+
+  String _formatRupiah(int number) {
+    final String numberStr = number.toString();
+    final RegExp regex = RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))');
+    return 'Rp ${numberStr.replaceAllMapped(regex, (Match m) => '${m[1]}.')}';
+  }
 
   void _hitungTotal() {
     int jumlah = int.tryParse(_jumlahController.text) ?? 0;
@@ -22,55 +42,115 @@ class _DetailPageState extends State<DetailPage> {
     setState(() {
       totalHarga = harga * jumlah;
     });
+  }
+
+  void _tambahPesanan() {
+    _hitungTotal();
+    int jumlah = int.tryParse(_jumlahController.text) ?? 0;
 
     ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text("Pesanan ditambahkan: Rp.$totalHarga | $jumlah item")),
+      SnackBar(
+        content: Text("Pesanan ditambahkan: ${_formatRupiah(totalHarga)} (${jumlah} item)"),
+        backgroundColor: Colors.blueGrey,
+        duration: const Duration(seconds: 2),
+      ),
     );
   }
+
 
   @override
   Widget build(BuildContext context) {
     final food = foodList[widget.index];
 
     return Scaffold(
-      appBar: AppBar(title: Text("Detail Page")),
-      body: Padding(
-        padding: const EdgeInsets.all(20),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.center,
-          children: [
-            Image.network(
-              food.imageUrls[0],
-              height: 200,
-              errorBuilder: (context, error, stackTrace) =>
-                  Icon(Icons.broken_image, size: 100),
+      appBar: AppBar(
+        title: const Text("Detail Makanan"),
+        backgroundColor: Colors.indigo,
+        foregroundColor: Colors.white,
+      ),
+      body: ListView(
+        padding: const EdgeInsets.all(16.0),
+        children: [
+          Image.network(
+            food.imageUrls[0],
+            height: 250,
+            width: double.infinity,
+            fit: BoxFit.cover,
+            errorBuilder: (context, error, stackTrace) => 
+                const Icon(Icons.broken_image, size: 100, color: Colors.grey),
+          ),
+          const SizedBox(height: 16),
+
+          Text(
+            food.name,
+            style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+            textAlign: TextAlign.center,
+          ),
+          const SizedBox(height: 8),
+
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceAround,
+            children: [
+              Text(
+                "Harga: ${food.price}",
+                style: const TextStyle(fontSize: 18, color: Colors.black87),
+              ),
+              Text(
+                "Review: ${food.reviewAverage}",
+                style: const TextStyle(fontSize: 18, color: Colors.black87),
+              ),
+            ],
+          ),
+          const Divider(height: 30),
+
+          const Text(
+            "Deskripsi Produk:",
+            style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            food.about,
+            style: const TextStyle(fontSize: 15, height: 1.5),
+            textAlign: TextAlign.justify,
+          ),
+          const SizedBox(height: 20),
+
+          TextField(
+            controller: _jumlahController,
+            keyboardType: TextInputType.number,
+            decoration: const InputDecoration(
+              labelText: "Jumlah Pesanan",
+              border: OutlineInputBorder(),
             ),
-            const SizedBox(height: 15),
-            Text(food.name,
-                style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
-            Text("Review: ${food.reviewAverage}"),
-            Text("Harga : ${food.price}"),
-            const SizedBox(height: 20),
-            TextField(
-              controller: _jumlahController,
-              keyboardType: TextInputType.number,
-              decoration: InputDecoration(
-                labelText: "Masukkan Jumlah",
-                border: OutlineInputBorder(),
+          ),
+          const SizedBox(height: 20),
+          
+          Center(
+            child: Text(
+              "Total: ${_formatRupiah(totalHarga)}",
+              style: const TextStyle(
+                fontSize: 24, 
+                fontWeight: FontWeight.bold,
+                color: Colors.red, 
               ),
             ),
-            const SizedBox(height: 20),
-            ElevatedButton(
-              onPressed: _hitungTotal,
-              child: Text("Submit"),
+          ),
+          const SizedBox(height: 16),
+          
+          ElevatedButton(
+            onPressed: _tambahPesanan,
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.indigo,
+              foregroundColor: Colors.white,
+              padding: const EdgeInsets.symmetric(vertical: 15),
+              shape: const RoundedRectangleBorder(), 
             ),
-            const SizedBox(height: 20),
-            Text(
-              "Total Harga: Rp $totalHarga",
-              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+            child: const Text(
+              "Tambahkan ke Keranjang",
+              style: TextStyle(fontSize: 18),
             ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }
