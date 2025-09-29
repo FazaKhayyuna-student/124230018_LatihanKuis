@@ -1,7 +1,5 @@
 # 124230018_Muhammad Faza Khayyuna_LatihanKuiz
-# maaf mas nggak seusai format repo nya baru setelah selesai semua
-
-A new Flutter project.
+ maaf mas nggak seusai format repo nya baru setelah selesai semua
 
 ## Getting Started
 
